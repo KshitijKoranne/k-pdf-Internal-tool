@@ -1,5 +1,7 @@
 {
-  "name": "pdfcraft",
+  "name": "k-pdf",
+  "description": "K-PDF — Internal PDF Toolkit",
+  "author": "K-PDF Team",
   "version": "0.1.0",
   "private": true,
   "type": "module",

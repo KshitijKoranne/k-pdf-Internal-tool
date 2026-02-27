@@ -232,16 +232,6 @@ export function generateWebPageSchema(
 ): WebPageSchema {
   const languageMap: Record<Locale, string> = {
     en: 'en-US',
-    ja: 'ja-JP',
-    ko: 'ko-KR',
-    es: 'es-ES',
-    fr: 'fr-FR',
-    de: 'de-DE',
-    zh: 'zh-CN',
-    'zh-TW': 'zh-TW',
-    pt: 'pt-BR',
-    ar: 'ar-AR',
-    it: 'it-IT',
   };
 
   return {
@@ -315,7 +305,7 @@ export function generateOrganizationSchema(): OrganizationSchema {
     '@type': 'Organization',
     name: siteConfig.name,
     url: siteConfig.url,
-    logo: `${siteConfig.url}/images/logo.png`,
+    logo: `${siteConfig.url}/images/logo.svg`,
     sameAs: siteConfig.links.github ? [siteConfig.links.github] : [],
   };
 }

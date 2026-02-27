@@ -258,7 +258,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   const baseStyles = `
     relative flex flex-col items-center justify-center
-    w-full min-h-[250px] p-10
+    w-full min-h-[150px] p-6
     border-2 border-dashed
     rounded-[2rem]
     transition-all duration-300
@@ -314,7 +314,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* Upload icon */}
       <div className={`
-        mb-6 p-4 rounded-full transition-transform duration-300 group-hover:scale-110
+        mb-3 p-4 rounded-full transition-transform duration-300 group-hover:scale-110
         ${isDragging ? 'bg-[hsl(var(--color-primary)/0.1)] text-[hsl(var(--color-primary))]' : 'bg-[hsl(var(--color-muted))] text-[hsl(var(--color-muted-foreground))] group-hover:bg-[hsl(var(--color-primary)/0.1)] group-hover:text-[hsl(var(--color-primary))]'}
       `}>
         <UploadCloud className="w-10 h-10" aria-hidden="true" />
@@ -340,7 +340,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
       {/* File info hints - only show when multiple files allowed */}
       {multiple && (
-        <div className="mt-6 flex flex-wrap gap-2 justify-center">
+        <div className="mt-3 flex flex-wrap gap-2 justify-center">
           <span className="text-xs px-2 py-1 rounded-md bg-[hsl(var(--color-muted))] text-[hsl(var(--color-muted-foreground))]">
             Files: {maxFiles}
           </span>

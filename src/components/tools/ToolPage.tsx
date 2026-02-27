@@ -61,7 +61,7 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
         <Header locale={locale as Locale} />
 
         <main id="main-content" className="flex-1" tabIndex={-1}>
-          <div className="max-w-7xl mx-auto px-4 pt-24 pb-8">
+          <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
             {/* Breadcrumb Navigation */}
             <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
               <Link
@@ -70,20 +70,6 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
                 title={t('common.navigation.home')}
               >
                 <Home className="w-4 h-4" />
-              </Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-              <Link
-                href={`/${locale}/tools`}
-                className="hover:text-[hsl(var(--color-primary))] transition-colors"
-              >
-                {t('common.navigation.tools')}
-              </Link>
-              <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
-              <Link
-                href={`/${locale}/tools/category/${tool.category}`}
-                className="hover:text-[hsl(var(--color-primary))] transition-colors"
-              >
-                {t(`home.categories.${categoryTranslationKeys[tool.category]}`)}
               </Link>
               <ChevronRight className="w-4 h-4 mx-2 text-[hsl(var(--color-border))]" />
               <span className="font-medium text-[hsl(var(--color-foreground))] truncate max-w-[200px] sm:max-w-md" aria-current="page">
@@ -103,17 +89,14 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
               {children}
             </section>
 
-            {/* Description Section */}
-            <DescriptionSection description={content.description} />
-
+            {/* Description Section (Removed for Internal Use) */}
+            
             {/* How to Use Section */}
             <HowToUseSection steps={content.howToUse} />
 
-            {/* Use Cases Section */}
-            <UseCasesSection useCases={content.useCases} />
+            {/* Use Cases Section (Removed for Internal Use) */}
 
-            {/* FAQ Section */}
-            <FAQSection faq={content.faq} />
+            {/* FAQ Section (Removed for Internal Use) */}
 
             {/* Related Tools Section */}
             <RelatedToolsSection
@@ -160,19 +143,12 @@ function ToolHeader({ tool, content }: ToolHeaderProps) {
         <IconComponent className="w-8 h-8 text-[hsl(var(--color-primary))]" />
       </div>
       <h1
-        className="text-3xl font-bold text-[hsl(var(--color-foreground))] mb-2"
+        className="text-3xl font-bold text-[hsl(var(--color-foreground))] mb-4"
         data-testid="tool-page-title"
         itemProp="name"
       >
         {content.title || toolName}
       </h1>
-      <p
-        className="text-lg text-[hsl(var(--color-muted-foreground))] max-w-2xl mx-auto leading-relaxed mb-4"
-        data-testid="tool-page-subtitle"
-        itemProp="description"
-      >
-        {content.metaDescription}
-      </p>
       <div className="flex items-center justify-center">
         <FavoriteButton toolId={tool.id} size="lg" showLabel />
       </div>

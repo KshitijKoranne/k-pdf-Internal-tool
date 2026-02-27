@@ -43,12 +43,14 @@ export function ToolCard({ tool, locale, className = '', localizedContent }: Too
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
-  // Generate a description from features
-  // Use localized description (metaDescription) if available
-  const description = localizedContent?.description || tool.features
+  // Generate a crisp, punchy description from features to keep tiles simple
+  const description = tool.features
     .slice(0, 3)
-    .map(f => f.replace(/-/g, ' '))
-    .join(', ');
+    .map(f => {
+      const formatted = f.replace(/-/g, ' ');
+      return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+    })
+    .join(' • ');
 
   const IconComponent = getToolIcon(tool.icon);
 
@@ -79,7 +81,7 @@ export function ToolCard({ tool, locale, className = '', localizedContent }: Too
               data-testid="tool-card-icon"
               aria-hidden="true"
             >
-              <IconComponent className="w-7 h-7 text-[hsl(var(--color-primary))]" />
+              <IconComponent className="w-7 h-7 text-[hsl(var(--color-primary))] transition-all duration-300" />
             </div>
           </div>
 

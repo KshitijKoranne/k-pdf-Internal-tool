@@ -1,4 +1,4 @@
-# PDFCraft Static Export Deployment Guide
+# K-PDF Static Export Deployment Guide
 
 This project is configured for static export, making it deployable to any static hosting provider.
 
@@ -431,7 +431,7 @@ NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
 
 ## 🌐 Multi-language Routes
 
-PDFCraft supports multiple languages. The static export generates pages for all locales:
+K-PDF supports multiple languages. The static export generates pages for all locales:
 
 | Locale | URL Pattern | Example |
 |--------|-------------|---------|
@@ -474,7 +474,7 @@ The build includes:
 
 ## 📦 LibreOffice WASM Architecture
 
-PDFCraft uses [LibreOffice WASM](https://github.com/nichdiekuh/libreoffice-wasm) (`@matbee/libreoffice-converter`) for document conversion (Word, Excel, PowerPoint, RTF to PDF). Understanding the file serving architecture is important for deployment.
+K-PDF uses [LibreOffice WASM](https://github.com/nichdiekuh/libreoffice-wasm) (`@matbee/libreoffice-converter`) for document conversion (Word, Excel, PowerPoint, RTF to PDF). Understanding the file serving architecture is important for deployment.
 
 ### File Layout
 
@@ -501,7 +501,7 @@ The raw WASM binary (`soffice.wasm`, ~147MB) exceeds GitHub's 100MB file size li
 |---|---|---|
 | Development (`npm run dev`) | `predev` → `scripts/decompress-wasm-dev.mjs` | `public/libreoffice-wasm/` |
 | Production Build (`npm run build`) | `postbuild` → `scripts/decompress-wasm.mjs` | `out/libreoffice-wasm/` |
-| Docker Build | Dockerfile `RUN gunzip -k` | `/website/pdfcraft/libreoffice-wasm/` |
+| Docker Build | Dockerfile `RUN gunzip -k` | `/website/k-pdf/libreoffice-wasm/` |
 
 ### How Each Platform Serves These Files
 

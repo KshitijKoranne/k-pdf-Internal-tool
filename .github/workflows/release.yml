@@ -63,30 +63,30 @@ jobs:
         run: |
           # The 'out' directory contains the static export
           cd out
-          zip -r ../pdfcraft-${{ steps.version.outputs.version }}.zip .
+          zip -r ../k-pdf-${{ steps.version.outputs.version }}.zip .
           cd ..
           
-          echo "📦 Release package created: pdfcraft-${{ steps.version.outputs.version }}.zip"
-          echo "📊 Package size: $(du -h pdfcraft-${{ steps.version.outputs.version }}.zip | cut -f1)"
+          echo "📦 Release package created: k-pdf-${{ steps.version.outputs.version }}.zip"
+          echo "📊 Package size: $(du -h k-pdf-${{ steps.version.outputs.version }}.zip | cut -f1)"
 
       # Create GitHub Release with auto-generated notes from commits
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
-          name: PDFCraft ${{ steps.version.outputs.version }}
+          name: K-PDF ${{ steps.version.outputs.version }}
           body: |
-            ## 🚀 PDFCraft Release ${{ steps.version.outputs.version }}
+            ## 🚀 K-PDF Release ${{ steps.version.outputs.version }}
             
             ### 📦 Download & Usage
-            1. Download `pdfcraft-${{ steps.version.outputs.version }}.zip`
+            1. Download `k-pdf-${{ steps.version.outputs.version }}.zip`
             2. Extract to any directory
             3. Serve with any static HTTP server
             
             **Quick start:**
             ```bash
             # Using Python
-            cd pdfcraft
+            cd k-pdf
             python -m http.server 8080
             
             # Or using Node.js
@@ -102,7 +102,7 @@ jobs:
             **Commit:** `${{ github.sha }}`  
             **Build Time:** ${{ steps.version.outputs.build_time }}
           files: |
-            pdfcraft-${{ steps.version.outputs.version }}.zip
+            k-pdf-${{ steps.version.outputs.version }}.zip
           draft: false
           prerelease: false
           generate_release_notes: true
