@@ -21,16 +21,19 @@ const sizeStyles: Record<CardSize, string> = {
 
 const variantStyles: Record<CardVariant, string> = {
   default: `
-    bg-[hsl(var(--color-card))]
-    border border-[hsl(var(--color-border))]
+    bg-[hsl(var(--kpdf-card))]
+    border border-[hsl(var(--kpdf-border))]
+    text-[hsl(var(--kpdf-card-fg))]
   `,
   elevated: `
-    bg-[hsl(var(--color-card))]
-    shadow-[var(--shadow-md)]
+    bg-[hsl(var(--kpdf-card))]
+    text-[hsl(var(--kpdf-card-fg))]
+    shadow-lg
   `,
   outlined: `
     bg-transparent
-    border-2 border-[hsl(var(--color-border))]
+    border-2 border-[hsl(var(--kpdf-border))]
+    text-[hsl(var(--kpdf-card-fg))]
   `,
 };
 
@@ -48,15 +51,14 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     const baseStyles = `
-      rounded-[var(--radius-lg)]
-      text-[hsl(var(--color-card-foreground))]
-      transition-all duration-[var(--transition-normal)]
+      rounded-[var(--kpdf-radius-lg)]
+      transition-all duration-200
     `;
 
     const hoverStyles = hover
       ? `
-        hover:shadow-[var(--shadow-lg)]
-        hover:border-[hsl(var(--color-primary))]
+        hover:shadow-lg
+        hover:border-[hsl(var(--kpdf-primary))]
         hover:-translate-y-0.5
       `
       : '';
@@ -66,7 +68,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
         cursor-pointer
         focus:outline-none
         focus-visible:ring-2
-        focus-visible:ring-[hsl(var(--color-ring))]
+        focus-visible:ring-[hsl(var(--kpdf-ring))]
         focus-visible:ring-offset-2
       `
       : '';
@@ -115,7 +117,7 @@ export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
   ({ children, as: Component = 'h3', className = '', ...props }, ref) => (
     <Component
       ref={ref}
-      className={`text-lg font-semibold text-[hsl(var(--color-card-foreground))] ${className}`.trim()}
+      className={`text-lg font-semibold text-[hsl(var(--kpdf-card-fg))] ${className}`.trim()}
       {...props}
     >
       {children}
@@ -133,7 +135,7 @@ export const CardContent = forwardRef<HTMLDivElement, CardContentProps>(
   ({ children, className = '', ...props }, ref) => (
     <div
       ref={ref}
-      className={`text-[hsl(var(--color-muted-foreground))] ${className}`.trim()}
+      className={`text-[hsl(var(--kpdf-muted-fg))] ${className}`.trim()}
       {...props}
     >
       {children}
@@ -151,7 +153,7 @@ export const CardFooter = forwardRef<HTMLDivElement, CardFooterProps>(
   ({ children, className = '', ...props }, ref) => (
     <div
       ref={ref}
-      className={`mt-4 pt-3 border-t border-[hsl(var(--color-border))] ${className}`.trim()}
+      className={`mt-4 pt-3 border-t border-[hsl(var(--kpdf-border))] ${className}`.trim()}
       {...props}
     >
       {children}

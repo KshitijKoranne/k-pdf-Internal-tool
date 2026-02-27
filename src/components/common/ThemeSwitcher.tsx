@@ -18,13 +18,16 @@ export function ThemeSwitcher() {
     setMounted(true);
     const savedTheme = localStorage.getItem('k-pdf-theme') || 'light';
     setCurrentTheme(savedTheme);
+    // Apply to <html> so CSS selectors html[data-theme="..."] work correctly
     document.documentElement.setAttribute('data-theme', savedTheme);
+    document.documentElement.style.colorScheme = savedTheme === 'light' ? 'light' : 'dark';
   }, []);
 
   const changeTheme = (themeId: string) => {
     setCurrentTheme(themeId);
     localStorage.setItem('k-pdf-theme', themeId);
     document.documentElement.setAttribute('data-theme', themeId);
+    document.documentElement.style.colorScheme = themeId === 'light' ? 'light' : 'dark';
     setIsOpen(false);
   };
 

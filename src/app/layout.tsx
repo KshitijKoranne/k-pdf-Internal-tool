@@ -24,7 +24,10 @@ export default function RootLayout({
         <meta name="color-scheme" content="light dark" />
         <style dangerouslySetInnerHTML={{ __html: 'html{scrollbar-gutter:stable}' }} />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <script dangerouslySetInnerHTML={{
+        __html: `(function(){try{var t=localStorage.getItem('k-pdf-theme')||'light';document.documentElement.setAttribute('data-theme',t);document.documentElement.style.colorScheme=t==='light'?'light':'dark';}catch(e){}})();`
+      }} />
+      <body className="min-h-screen antialiased">
         {children}
       </body>
     </html>

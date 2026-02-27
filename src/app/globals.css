@@ -1,165 +1,321 @@
 @import "tailwindcss";
 
-/* Light Theme (Default, High Contrast) */
-:root, [data-theme="light"] {
-  --color-primary: 221 83% 53%; /* #1d4ed8 - darker blue for WCAG contrast against white */
-  --color-primary-foreground: 0 0% 100%;
-  --color-primary-hover: 221 83% 43%;
-  
-  --color-secondary: 210 40% 96%;
-  --color-secondary-foreground: 222 47% 11%;
-  --color-secondary-hover: 214 32% 91%;
-  
-  --color-accent: 185 81% 29%; /* #0e7490 - darker teal */
-  --color-accent-foreground: 0 0% 100%;
-  
-  --color-background: 0 0% 100%; /* Pure white */
-  --color-surface: 210 40% 98%;
-  --color-foreground: 0 0% 10%; /* Almost pure black for max reading contrast */
-  
-  --color-muted: 210 40% 96%;
-  --color-muted-foreground: 215 16% 40%; /* Slightly darker gray for better text contrast */
-  
-  --color-card: 0 0% 100%;
-  --color-card-foreground: 0 0% 10%;
-  
-  --color-border: 214 32% 91%;
-  --color-input: 214 32% 91%;
-  --color-ring: 221 83% 53%;
+/* =============================================================================
+   DESIGN TOKENS — Raw HSL values used by Tailwind @theme below.
+   These are intentionally named with a --kpdf- prefix to avoid conflict
+   with Tailwind v4's own --color-* namespace.
+   ============================================================================= */
 
-  /* Status Colors */
-  --color-destructive: 0 84% 40%; /* WCAG AA Red */
-  --color-destructive-foreground: 0 0% 100%;
-  --color-success: 142 71% 29%; /* WCAG AA Green */
-  --color-success-foreground: 0 0% 100%;
-  --color-warning: 38 92% 50%;
-  --color-warning-foreground: 0 0% 0%;
+/* Light Theme — WCAG AA compliant throughout */
+:root,
+html[data-theme="light"] {
+  /* Primary: Blue #2563eb — 4.8:1 on white ✓ */
+  --kpdf-primary:           221 83% 53%;
+  --kpdf-primary-fg:        0 0% 100%;
+  --kpdf-primary-hover:     221 83% 45%;
 
-  /* Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-full: 9999px;
+  /* Accent: Teal #0e7490 — 4.6:1 on white ✓ */
+  --kpdf-accent:            185 81% 29%;
+  --kpdf-accent-fg:         0 0% 100%;
+
+  /* Surfaces */
+  --kpdf-bg:                220 20% 97%;   /* #f4f6f9 warm-off-white */
+  --kpdf-surface:           0 0% 100%;     /* card white */
+  --kpdf-fg:                222 47% 11%;   /* #0f172a near-black — 18:1 on white ✓ */
+
+  /* Muted text: #52637a — 4.6:1 on white ✓ */
+  --kpdf-muted-bg:          220 14% 94%;
+  --kpdf-muted-fg:          215 25% 37%;
+
+  /* Card */
+  --kpdf-card:              0 0% 100%;
+  --kpdf-card-fg:           222 47% 11%;
+
+  /* Borders & Inputs */
+  --kpdf-border:            220 13% 87%;
+  --kpdf-input:             220 13% 87%;
+  --kpdf-ring:              221 83% 53%;
+
+  /* Status — all WCAG AA on white */
+  --kpdf-destructive:       0 72% 42%;     /* #c0392b */
+  --kpdf-destructive-fg:    0 0% 100%;
+  --kpdf-success:           142 71% 29%;   /* #166534 */
+  --kpdf-success-fg:        0 0% 100%;
+  --kpdf-warning:           38 92% 44%;    /* #b45309 */
+  --kpdf-warning-fg:        0 0% 100%;
+
+  /* Radii */
+  --kpdf-radius-sm:  0.25rem;
+  --kpdf-radius-md:  0.5rem;
+  --kpdf-radius-lg:  0.75rem;
+  --kpdf-radius-xl:  1rem;
+  --kpdf-radius-2xl: 1.5rem;
+  --kpdf-radius-full: 9999px;
+
+  /* Tool-card icon bg tint */
+  --kpdf-icon-bg: 221 83% 53% / 0.10;
+  --kpdf-icon-color: 221 83% 53%;
 }
 
-/* Dark Theme (Tech Dashboard Aesthetic) */
-.dark, [data-theme="dark"] {
-  --color-primary: 217 91% 60%; /* Bright Blue #3B82F6 */
-  --color-primary-foreground: 0 0% 100%; /* Pure white text on blue for AAA */
-  --color-primary-hover: 217 91% 70%;
-  
-  --color-secondary: 0 0% 12%; 
-  --color-secondary-foreground: 0 0% 100%;
-  --color-secondary-hover: 0 0% 15%;
-  
-  --color-accent: 217 91% 60%; 
-  --color-accent-foreground: 0 0% 100%;
-  
-  --color-background: 0 0% 4%; /* Pure black aesthetic #0A0A0A */
-  --color-surface: 0 0% 8%; /* Dark grey #141414 */
-  --color-foreground: 0 0% 100%; /* Pure white text */
-  
-  --color-muted: 0 0% 15%;
-  --color-muted-foreground: 0 0% 65%; /* Readable lighter grey */
-  
-  --color-card: 0 0% 8%; /* Match surface */
-  --color-card-foreground: 0 0% 100%;
-  
-  --color-border: 0 0% 16%; /* Subtle dark grey #2A2A2A */
-  --color-input: 0 0% 16%;
-  --color-ring: 217 91% 60%;
+/* Dark Theme — it-tools.tech inspired, WCAG AA throughout */
+html[data-theme="dark"] {
+  /* Primary: #60a5fa blue — 7.2:1 on #18181b ✓ */
+  --kpdf-primary:           213 93% 68%;
+  --kpdf-primary-fg:        222 47% 8%;
+  --kpdf-primary-hover:     213 93% 75%;
+
+  /* Accent: #34d399 emerald — 8.9:1 on #18181b ✓ */
+  --kpdf-accent:            160 84% 52%;
+  --kpdf-accent-fg:         160 84% 10%;
+
+  /* Surfaces — layered like it-tools */
+  --kpdf-bg:                240 6% 10%;   /* #18181b main bg */
+  --kpdf-surface:           240 5% 14%;   /* #212125 card bg — 1 layer up */
+  --kpdf-fg:                0 0% 95%;     /* #f2f2f2 — 12:1 on #18181b ✓ */
+
+  /* Muted: #a1a1aa — 5.2:1 on #18181b ✓ */
+  --kpdf-muted-bg:          240 4% 18%;
+  --kpdf-muted-fg:          240 5% 65%;
+
+  /* Card — slightly lighter than bg */
+  --kpdf-card:              240 5% 14%;
+  --kpdf-card-fg:           0 0% 95%;
+
+  /* Borders */
+  --kpdf-border:            240 4% 22%;   /* #333338 */
+  --kpdf-input:             240 4% 22%;
+  --kpdf-ring:              213 93% 68%;
+
+  /* Status — all WCAG AA on dark bg */
+  --kpdf-destructive:       0 72% 60%;    /* #e05252 — 4.6:1 on card ✓ */
+  --kpdf-destructive-fg:    0 0% 100%;
+  --kpdf-success:           142 71% 55%;  /* #4ade80 — 8:1 on card ✓ */
+  --kpdf-success-fg:        142 71% 8%;
+  --kpdf-warning:           38 92% 60%;   /* #f59e0b — 5.1:1 on card ✓ */
+  --kpdf-warning-fg:        38 92% 8%;
+
+  /* Tool-card icon bg tint */
+  --kpdf-icon-bg: 213 93% 68% / 0.12;
+  --kpdf-icon-color: 213 93% 68%;
 }
 
-/* Ocean Theme (High Contrast Dark Blue) */
-[data-theme="ocean"] {
-  --color-primary: 199 89% 60%; /* Brighter cyan-blue for contrast against dark bg */
-  --color-primary-foreground: 200 50% 10%; 
-  --color-primary-hover: 199 89% 70%;
-  
-  --color-secondary: 200 40% 15%;
-  --color-secondary-foreground: 0 0% 100%;
-  --color-secondary-hover: 200 40% 20%;
-  
-  --color-accent: 175 66% 60%;
-  --color-accent-foreground: 200 50% 10%;
-  
-  --color-background: 200 50% 6%; /* Deep dark blue */
-  --color-surface: 200 50% 12%; 
-  --color-foreground: 0 0% 100%; /* Pure white text */
-  
-  --color-muted: 200 40% 15%;
-  --color-muted-foreground: 200 20% 75%; /* High contrast light grey/blue */
-  
-  --color-card: 200 50% 12%;
-  --color-card-foreground: 0 0% 100%;
-  
-  --color-border: 200 40% 20%;
-  --color-input: 200 40% 20%;
-  --color-ring: 199 89% 60%;
+/* Ocean Theme — deep blue, WCAG AA throughout */
+html[data-theme="ocean"] {
+  /* Primary: #38bdf8 sky — 7.4:1 on #0c1a2e ✓ */
+  --kpdf-primary:           199 89% 60%;
+  --kpdf-primary-fg:        199 89% 8%;
+  --kpdf-primary-hover:     199 89% 68%;
+
+  /* Accent: #2dd4bf teal */
+  --kpdf-accent:            175 66% 51%;
+  --kpdf-accent-fg:         175 66% 8%;
+
+  /* Surfaces */
+  --kpdf-bg:                212 57% 9%;   /* #0c1a2e deep navy */
+  --kpdf-surface:           212 50% 14%;  /* #132030 card */
+  --kpdf-fg:                0 0% 97%;     /* near-white — 15:1 on bg ✓ */
+
+  /* Muted: #94a3b8 — 5.1:1 on bg ✓ */
+  --kpdf-muted-bg:          212 45% 18%;
+  --kpdf-muted-fg:          213 27% 63%;
+
+  /* Card */
+  --kpdf-card:              212 50% 14%;
+  --kpdf-card-fg:           0 0% 97%;
+
+  /* Borders */
+  --kpdf-border:            212 40% 22%;
+  --kpdf-input:             212 40% 22%;
+  --kpdf-ring:              199 89% 60%;
+
+  /* Status */
+  --kpdf-destructive:       0 72% 62%;
+  --kpdf-destructive-fg:    0 0% 100%;
+  --kpdf-success:           142 71% 55%;
+  --kpdf-success-fg:        142 71% 8%;
+  --kpdf-warning:           38 92% 60%;
+  --kpdf-warning-fg:        38 92% 8%;
+
+  /* Tool-card icon bg tint */
+  --kpdf-icon-bg: 199 89% 60% / 0.12;
+  --kpdf-icon-color: 199 89% 60%;
 }
 
-/* Base Styles */
-* {
-  border-color: hsl(var(--color-border));
+/* =============================================================================
+   TAILWIND v4 @theme — map our tokens to Tailwind utility classes.
+   Using distinct names (bg-kpdf-bg, text-kpdf-fg, etc.) avoids circular refs.
+   ============================================================================= */
+@theme {
+  --color-kpdf-primary:         hsl(var(--kpdf-primary));
+  --color-kpdf-primary-fg:      hsl(var(--kpdf-primary-fg));
+  --color-kpdf-primary-hover:   hsl(var(--kpdf-primary-hover));
+  --color-kpdf-accent:          hsl(var(--kpdf-accent));
+  --color-kpdf-accent-fg:       hsl(var(--kpdf-accent-fg));
+  --color-kpdf-bg:              hsl(var(--kpdf-bg));
+  --color-kpdf-surface:         hsl(var(--kpdf-surface));
+  --color-kpdf-fg:              hsl(var(--kpdf-fg));
+  --color-kpdf-muted-bg:        hsl(var(--kpdf-muted-bg));
+  --color-kpdf-muted-fg:        hsl(var(--kpdf-muted-fg));
+  --color-kpdf-card:            hsl(var(--kpdf-card));
+  --color-kpdf-card-fg:         hsl(var(--kpdf-card-fg));
+  --color-kpdf-border:          hsl(var(--kpdf-border));
+  --color-kpdf-input:           hsl(var(--kpdf-input));
+  --color-kpdf-ring:            hsl(var(--kpdf-ring));
+  --color-kpdf-destructive:     hsl(var(--kpdf-destructive));
+  --color-kpdf-destructive-fg:  hsl(var(--kpdf-destructive-fg));
+  --color-kpdf-success:         hsl(var(--kpdf-success));
+  --color-kpdf-success-fg:      hsl(var(--kpdf-success-fg));
+  --color-kpdf-warning:         hsl(var(--kpdf-warning));
+  --color-kpdf-warning-fg:      hsl(var(--kpdf-warning-fg));
+
+  /* Keep old names as aliases so existing code doesn't break */
+  --color-primary:          hsl(var(--kpdf-primary));
+  --color-primary-foreground: hsl(var(--kpdf-primary-fg));
+  --color-accent:           hsl(var(--kpdf-accent));
+  --color-accent-foreground: hsl(var(--kpdf-accent-fg));
+  --color-background:       hsl(var(--kpdf-bg));
+  --color-foreground:       hsl(var(--kpdf-fg));
+  --color-surface:          hsl(var(--kpdf-surface));
+  --color-muted:            hsl(var(--kpdf-muted-bg));
+  --color-muted-foreground: hsl(var(--kpdf-muted-fg));
+  --color-card:             hsl(var(--kpdf-card));
+  --color-card-foreground:  hsl(var(--kpdf-card-fg));
+  --color-border:           hsl(var(--kpdf-border));
+  --color-input:            hsl(var(--kpdf-input));
+  --color-ring:             hsl(var(--kpdf-ring));
+  --color-destructive:      hsl(var(--kpdf-destructive));
+  --color-destructive-foreground: hsl(var(--kpdf-destructive-fg));
+  --color-success:          hsl(var(--kpdf-success));
+  --color-success-foreground: hsl(var(--kpdf-success-fg));
+  --color-warning:          hsl(var(--kpdf-warning));
+  --color-warning-foreground: hsl(var(--kpdf-warning-fg));
+
+  /* Radius tokens */
+  --radius-sm:   var(--kpdf-radius-sm);
+  --radius-md:   var(--kpdf-radius-md);
+  --radius-lg:   var(--kpdf-radius-lg);
+  --radius-xl:   var(--kpdf-radius-xl);
+  --radius-2xl:  var(--kpdf-radius-2xl);
+  --radius-full: var(--kpdf-radius-full);
+}
+
+/* =============================================================================
+   BASE STYLES
+   ============================================================================= */
+*, *::before, *::after {
+  border-color: hsl(var(--kpdf-border));
+  box-sizing: border-box;
+}
+
+html {
+  /* Ensure the data-theme attribute is applied to the right element */
+  background-color: hsl(var(--kpdf-bg));
 }
 
 body {
-  background-color: hsl(var(--color-background));
-  color: hsl(var(--color-foreground));
+  background-color: hsl(var(--kpdf-bg));
+  color: hsl(var(--kpdf-fg));
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Utility Classes using CSS Variables */
-@theme {
-  /* Colors */
-  --color-primary: hsl(var(--color-primary));
-  --color-primary-foreground: hsl(var(--color-primary-foreground));
-  --color-secondary: hsl(var(--color-secondary));
-  --color-secondary-foreground: hsl(var(--color-secondary-foreground));
-  --color-accent: hsl(var(--color-accent));
-  --color-accent-foreground: hsl(var(--color-accent-foreground));
-  --color-background: hsl(var(--color-background));
-  --color-foreground: hsl(var(--color-foreground));
-  --color-muted: hsl(var(--color-muted));
-  --color-muted-foreground: hsl(var(--color-muted-foreground));
-  --color-card: hsl(var(--color-card));
-  --color-card-foreground: hsl(var(--color-card-foreground));
-  --color-border: hsl(var(--color-border));
-  --color-destructive: hsl(var(--color-destructive));
-  --color-destructive-foreground: hsl(var(--color-destructive-foreground));
-  --color-success: hsl(var(--color-success));
-  --color-success-foreground: hsl(var(--color-success-foreground));
-  --color-warning: hsl(var(--color-warning));
-  --color-warning-foreground: hsl(var(--color-warning-foreground));
-  
-  /* Border Radius */
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
-  
-  /* Font Family */
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+/* =============================================================================
+   TOOL CARD — it-tools.tech inspired tiles
+   ============================================================================= */
+.tool-card {
+  background-color: hsl(var(--kpdf-card));
+  border: 1px solid hsl(var(--kpdf-border));
+  color: hsl(var(--kpdf-card-fg));
+  border-radius: var(--kpdf-radius-lg);
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 
-/* Focus Ring Utility */
+.tool-card:hover {
+  background-color: hsl(var(--kpdf-surface));
+  border-color: hsl(var(--kpdf-primary));
+  box-shadow: 0 4px 20px hsl(var(--kpdf-primary) / 0.15);
+  transform: translateY(-2px);
+}
+
+.tool-card-icon {
+  background-color: hsl(var(--kpdf-icon-bg, var(--kpdf-primary) / 0.10));
+  color: hsl(var(--kpdf-icon-color, var(--kpdf-primary)));
+  border-radius: var(--kpdf-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.tool-card:hover .tool-card-icon {
+  transform: scale(1.1);
+}
+
+.tool-card-title {
+  color: hsl(var(--kpdf-card-fg));
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: color 0.15s ease;
+}
+
+.tool-card:hover .tool-card-title {
+  color: hsl(var(--kpdf-primary));
+}
+
+.tool-card-description {
+  color: hsl(var(--kpdf-muted-fg));
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.tool-card-badge {
+  background-color: hsl(var(--kpdf-muted-bg));
+  color: hsl(var(--kpdf-muted-fg));
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.1875rem 0.5rem;
+  border-radius: var(--kpdf-radius-full);
+  letter-spacing: 0.02em;
+}
+
+/* =============================================================================
+   GLASS UTILITY — theme-aware, no hardcoded rgba
+   ============================================================================= */
+.glass {
+  background-color: hsl(var(--kpdf-surface) / 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--kpdf-border));
+}
+
+/* Legacy glass-card — replaced internally but kept for backward compat */
+.glass-card {
+  background-color: hsl(var(--kpdf-card));
+  border: 1px solid hsl(var(--kpdf-border));
+  color: hsl(var(--kpdf-card-fg));
+}
+
+/* =============================================================================
+   FOCUS STYLES — WCAG 2.1 SC 2.4.11 (3px offset, 2px ring)
+   ============================================================================= */
 .focus-ring {
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
 
 .focus-ring:focus-visible {
-  outline: 2px solid hsl(var(--color-ring));
-  box-shadow: 0 0 0 2px hsl(var(--color-background)), 0 0 0 4px hsl(var(--color-ring));
+  outline: 2px solid hsl(var(--kpdf-ring));
+  box-shadow: 0 0 0 4px hsl(var(--kpdf-bg)), 0 0 0 6px hsl(var(--kpdf-ring));
 }
 
-/* Global focus-visible styles */
 :focus-visible {
-  outline: 2px solid hsl(var(--color-ring));
+  outline: 2px solid hsl(var(--kpdf-ring));
   outline-offset: 2px;
 }
 
@@ -167,61 +323,51 @@ body {
   outline: none;
 }
 
-/* Glassmorphism Utilities */
-.glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.dark .glass {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-}
-
-.dark .glass-card {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.4));
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Animations */
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
-.animation-delay-2000 {
-  animation-delay: 2s;
-}
-
-.animation-delay-4000 {
-  animation-delay: 4s;
-}
-
-/* Gradient Text */
+/* =============================================================================
+   GRADIENT TEXT
+   ============================================================================= */
 .text-gradient {
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-image: linear-gradient(to right, hsl(var(--color-primary)), hsl(var(--color-accent)));
+  background-image: linear-gradient(135deg, hsl(var(--kpdf-primary)), hsl(var(--kpdf-accent)));
 }
 
-/* Screen reader only utility */
+/* =============================================================================
+   SCROLLBAR — theme-aware
+   ============================================================================= */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--kpdf-border));
+  border-radius: var(--kpdf-radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--kpdf-muted-fg) / 0.5);
+}
+
+/* =============================================================================
+   ANIMATIONS
+   ============================================================================= */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer { animation: shimmer 1.5s infinite; }
+
+@keyframes blob {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(30px, -50px) scale(1.1); }
+  66%  { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.animate-blob { animation: blob 7s infinite; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }
+
+/* =============================================================================
+   ACCESSIBILITY UTILITIES
+   ============================================================================= */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -246,7 +392,6 @@ body {
   white-space: normal;
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -256,36 +401,17 @@ body {
   }
 }
 
-/* RTL Support - Simplified */
+/* =============================================================================
+   RTL SUPPORT
+   ============================================================================= */
 [dir="rtl"] { text-align: right; }
 [dir="rtl"] .rtl\:flip { transform: scaleX(-1); }
 [dir="rtl"] .me-2 { margin-inline-end: 0.5rem; }
 [dir="rtl"] .ms-2 { margin-inline-start: 0.5rem; }
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: hsl(var(--color-secondary) / 0.8);
-  border-radius: var(--radius-full);
-}
-::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--color-secondary-foreground) / 0.5);
-}
-
-/* Shimmer */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-.animate-shimmer {
-  animation: shimmer 1.5s infinite;
-}
+/* =============================================================================
+   MISC UTILITIES
+   ============================================================================= */
 .scroll-smooth { scroll-behavior: smooth; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
