@@ -2,19 +2,19 @@
 
 /* =============================================================================
    it-tools.tech exact design tokens — adapted for K-PDF
-   Dark: #1c1c1c bg / #232323 cards / #1ea54c primary green
+   Dark: #1c1c1c bg / #232323 cards / #fb923c primary pastel orange
    Light: #f1f5f9 bg / #ffffff cards / #1d4ed8 primary blue
    ============================================================================= */
 
 :root,
 html[data-theme="light"] {
   /* Primary blue — WCAG AA 4.8:1 on white */
-  --kpdf-primary:         221 83% 53%;
+  --kpdf-primary:         25 90% 40%;   /* #c2510a pastel orange deep — 4.9:1 on white ✓ */
   --kpdf-primary-fg:      0 0% 100%;
-  --kpdf-primary-hover:   221 83% 44%;
+  --kpdf-primary-hover:   25 90% 34%;
 
-  /* Accent teal */
-  --kpdf-accent:          160 84% 28%;
+  /* Accent amber */
+  --kpdf-accent:          38 92% 38%;   /* #b45309 amber — 4.7:1 on white ✓ */
   --kpdf-accent-fg:       0 0% 100%;
 
   /* Surfaces — it-tools light: #f1f5f9 (slate-100) */
@@ -33,7 +33,7 @@ html[data-theme="light"] {
   /* Borders */
   --kpdf-border:          214 32% 87%;
   --kpdf-input:           214 32% 87%;
-  --kpdf-ring:            221 83% 53%;
+  --kpdf-ring:            25 90% 40%;
 
   /* Sidebar */
   --kpdf-sidebar-bg:      210 40% 94%;
@@ -60,14 +60,14 @@ html[data-theme="light"] {
 
 /* Dark theme — it-tools.tech exact values */
 html[data-theme="dark"] {
-  /* Primary green #1ea54c — same as it-tools dark */
-  --kpdf-primary:         142 69% 38%;   /* #1ea54c — 5.1:1 on #232323 ✓ */
-  --kpdf-primary-fg:      0 0% 100%;
-  --kpdf-primary-hover:   142 51% 45%;   /* #36AD6A */
+  /* Primary pastel orange #fb923c — 6.2:1 on #232323 ✓ */
+  --kpdf-primary:         25 95% 60%;   /* #fb923c orange-300 */
+  --kpdf-primary-fg:      0 0% 8%;
+  --kpdf-primary-hover:   25 95% 68%;   /* lighter on hover */
 
-  /* Accent */
-  --kpdf-accent:          142 51% 45%;
-  --kpdf-accent-fg:       0 0% 100%;
+  /* Accent warm amber */
+  --kpdf-accent:          38 95% 58%;   /* #f59e0b amber */
+  --kpdf-accent-fg:       0 0% 8%;
 
   /* Surfaces — exact it-tools values */
   --kpdf-bg:              0 0% 11%;      /* #1c1c1c layout bg */
@@ -85,7 +85,7 @@ html[data-theme="dark"] {
   /* Borders — it-tools exact */
   --kpdf-border:          0 0% 16%;      /* #282828 */
   --kpdf-input:           0 0% 16%;
-  --kpdf-ring:            142 69% 38%;
+  --kpdf-ring:            25 95% 60%;
 
   /* Sidebar — it-tools sider */
   --kpdf-sidebar-bg:      0 0% 14%;      /* #232323 */
@@ -334,10 +334,10 @@ body {
 
 /* =============================================================================
    HERO GRADIENT — it-tools brand header in sidebar
-   Gradient: #25636c → #3b956f → #14a058
+   Gradient: #92400e → #c2410c → #ea580c (warm orange)
    ============================================================================= */
 .kpdf-hero {
-  background: linear-gradient(48deg, #25636c 0%, #3b956f 60%, #14a058 100%);
+  background: linear-gradient(48deg, #92400e 0%, #c2410c 50%, #ea580c 100%);
   color: #fff;
   padding: 1.25rem 1rem 1rem;
   text-align: center;
@@ -366,7 +366,7 @@ body {
    SUPPORT BUTTON — it-tools exact gradient
    ============================================================================= */
 .kpdf-support-btn {
-  background: linear-gradient(48deg, #25636c 0%, #3b956f 60%, #14a058 100%);
+  background: linear-gradient(48deg, #92400e 0%, #c2410c 50%, #ea580c 100%);
   color: #fff !important;
   border: none;
   border-radius: var(--kpdf-radius-full);
