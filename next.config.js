@@ -9,9 +9,6 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static export for deployment flexibility
-  output: 'export',
-
   // Webpack configuration for WASM modules
   webpack: (config, { isServer, webpack }) => {
     // Handle qpdf-wasm and other modules that use Node.js built-ins
@@ -61,7 +58,6 @@ const nextConfig = {
   },
 
   // Image optimization configuration
-  // Note: unoptimized is required for static export
   images: {
     unoptimized: true,
     // Define allowed image formats
@@ -79,9 +75,6 @@ const nextConfig = {
       canvas: './src/lib/mocks/canvas.js',
     },
   },
-
-  // Trailing slash for static hosting compatibility
-  trailingSlash: true,
 
   // Strict mode for better development experience
   reactStrictMode: true,
