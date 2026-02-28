@@ -70,7 +70,7 @@ export default async function LocaleLayout({
 
   return (
     <NextIntlClientProvider messages={messages}>
-      <div lang={locale} dir={direction} className={`${fontVariables} min-h-screen antialiased font-sans flex flex-col`} style={{ backgroundColor: 'hsl(var(--kpdf-bg))', color: 'hsl(var(--kpdf-fg))' }}>
+      <div lang={locale} dir={direction} className={`${fontVariables} antialiased font-sans`}>
         <SkipLink targetId="main-content">Skip to main content</SkipLink>
         {children}
       </div>
