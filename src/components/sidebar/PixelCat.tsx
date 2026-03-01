@@ -2,200 +2,237 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 
-// ─── Pixel art config ─────────────────────────────────────────────────────────
-const SCALE = 3;   // each "pixel" = 3×3 real pixels
-const W = 16;
-const H = 16;
+// ─── Constants ────────────────────────────────────────────────────────────────
+const S = 3; // pixel scale (each art pixel = 3×3 screen pixels)
 
-// Color palette
-const P: Record<number, string> = {
-  0: '', // transparent
-  1: '#f97316', // orange body
-  2: '#1a0800', // dark outline
-  3: '#fff4ec', // belly / eye whites
-  4: '#ff8fab', // nose / inner ear
-  5: '#fbbf72', // highlight / tail tip
-  6: '#c2510a', // shadow
-};
+// Palette
+const _ = 'transparent';
+const K = '#1a1a1a';   // black outline
+const O = '#f4913d';   // orange fur
+const D = '#c96e1e';   // dark orange / shadow
+const W = '#fff8f0';   // white / belly
+const P = '#ff8fab';   // pink nose + inner ear
+const B = '#5bb8f5';   // blue iris
+const E = '#1a5fa8';   // dark pupil
+const H = '#ffffff';   // eye highlight dot
+const T = '#d4a853';   // tail stripe / tip
 
-// ─── Sprite frames (16×16) ────────────────────────────────────────────────────
-type Frame = number[][];
+// ─── 16×16 Sprite frames ─────────────────────────────────────────────────────
+// Row by row, each entry is a color string or transparent
 
-const SIT: Frame = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
-  [0,0,1,2,1,1,1,1,1,1,1,1,2,1,0,0],
-  [0,0,1,2,3,1,1,1,1,1,1,3,2,1,0,0],
-  [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,0,1,6,0,0,0,0,0,0,0,0,6,1,0,0],
-  [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+type R = string; // color value
+
+// Helper: build a 16×16 grid from a compact string map
+// (we just use 2D arrays for clarity)
+
+//  Sitting, facing right — proper cat side profile
+const SIT: R[][] = [
+  [_,_,_,K,K,_,_,_,_,K,K,_,_,_,_,_], // ears tips
+  [_,_,K,O,O,K,_,_,K,O,O,K,_,_,_,_], // ears outer
+  [_,_,K,P,O,O,K,K,O,P,O,K,_,_,_,_], // inner ear + head
+  [_,K,O,O,O,O,O,O,O,O,O,O,K,_,_,_], // head wide
+  [K,O,O,B,E,O,O,O,O,B,E,O,O,K,_,_], // eyes row 1
+  [K,O,O,E,B,O,W,W,O,E,B,O,O,K,_,_], // eyes row 2 + muzzle
+  [K,O,O,O,O,K,P,K,O,O,O,O,O,K,_,_], // nose
+  [_,K,O,W,W,K,_,K,W,W,O,O,K,_,_,_], // muzzle lower
+  [_,_,K,O,O,K,_,K,O,O,O,K,_,_,_,_], // chin / neck
+  [_,_,K,O,D,O,O,O,D,O,O,K,_,_,_,_], // body top with shading
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_], // belly
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_], // belly 2
+  [_,_,K,D,O,O,O,O,O,O,D,K,_,_,_,_], // lower body
+  [_,_,K,O,K,K,_,_,K,K,O,K,_,_,_,_], // legs start
+  [_,_,K,O,K,_,_,_,_,K,O,K,_,_,_,_], // legs
+  [_,_,K,K,_,_,_,_,_,_,K,K,_,_,_,_], // paw bottom
 ];
 
-const BLINK1: Frame = SIT.map((row, r) =>
-  r === 4 ? row.map((v, c) => (c >= 2 && c <= 4) || (c >= 11 && c <= 13) ? 2 : v) : row
+// Walk frame 1 — front leg fwd, back leg back
+const W1: R[][] = [
+  [_,_,_,K,K,_,_,_,_,K,K,_,_,_,_,_],
+  [_,_,K,O,O,K,_,_,K,O,O,K,_,_,_,_],
+  [_,_,K,P,O,O,K,K,O,P,O,K,_,_,_,_],
+  [_,K,O,O,O,O,O,O,O,O,O,O,K,_,_,_],
+  [K,O,O,B,E,O,O,O,O,B,E,O,O,K,_,_],
+  [K,O,O,E,B,O,W,W,O,E,B,O,O,K,_,_],
+  [K,O,O,O,O,K,P,K,O,O,O,O,O,K,_,_],
+  [_,K,O,W,W,K,_,K,W,W,O,O,K,_,_,_],
+  [_,_,K,O,O,K,_,K,O,O,O,K,_,_,_,_],
+  [_,_,K,O,D,O,O,O,D,O,O,K,_,_,_,_],
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_],
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_],
+  [_,_,K,D,O,O,O,O,O,O,D,K,_,_,_,_],
+  [_,K,O,K,_,_,_,K,K,O,O,K,_,_,_,_], // front leg fwd, back leg back
+  [K,O,K,_,_,_,_,_,K,O,O,K,_,_,_,_],
+  [K,K,_,_,_,_,_,_,_,K,K,_,_,_,_,_],
+];
+
+// Walk frame 2 — legs swapped
+const W2: R[][] = [
+  [_,_,_,K,K,_,_,_,_,K,K,_,_,_,_,_],
+  [_,_,K,O,O,K,_,_,K,O,O,K,_,_,_,_],
+  [_,_,K,P,O,O,K,K,O,P,O,K,_,_,_,_],
+  [_,K,O,O,O,O,O,O,O,O,O,O,K,_,_,_],
+  [K,O,O,B,E,O,O,O,O,B,E,O,O,K,_,_],
+  [K,O,O,E,B,O,W,W,O,E,B,O,O,K,_,_],
+  [K,O,O,O,O,K,P,K,O,O,O,O,O,K,_,_],
+  [_,K,O,W,W,K,_,K,W,W,O,O,K,_,_,_],
+  [_,_,K,O,O,K,_,K,O,O,O,K,_,_,_,_],
+  [_,_,K,O,D,O,O,O,D,O,O,K,_,_,_,_],
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_],
+  [_,_,K,O,O,W,W,W,W,O,O,K,_,_,_,_],
+  [_,_,K,D,O,O,O,O,O,O,D,K,_,_,_,_],
+  [_,_,K,O,K,K,_,K,O,K,_,_,_,_,_,_], // legs other way
+  [_,_,_,K,O,K,_,K,O,K,_,_,_,_,_,_],
+  [_,_,_,_,K,K,_,_,K,K,_,_,_,_,_,_],
+];
+
+// Blink — eyes become horizontal lines
+const BLINK: R[][] = SIT.map((row, r) =>
+  r === 4
+    ? row.map((v, c) => (c >= 3 && c <= 4) ? K : (c >= 9 && c <= 10) ? K : v)
+    : r === 5
+    ? row.map((v, c) => (c === 3 || c === 4 || c === 9 || c === 10) ? O : v)
+    : row
 );
 
-const BLINK2: Frame = SIT.map((row, r) =>
-  r === 4 ? row.map((v, c) => (c >= 2 && c <= 4) || (c >= 11 && c <= 13) ? 2 : v) :
-  r === 3 ? row.map((v, c) => (c >= 2 && c <= 4) || (c >= 11 && c <= 13) ? 2 : v) : row
+// Sleep — curled, eyes shut, flatter
+const SLEEP: R[][] = [
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,K,K,_,_,K,K,_,_,_,_,_,_,_],
+  [_,_,K,O,O,K,K,O,O,K,_,_,_,_,_,_],
+  [_,K,O,P,O,O,O,O,P,O,K,_,_,_,_,_],
+  [_,K,O,O,K,K,P,K,K,O,O,K,_,_,_,_], // closed eyes, nose
+  [_,K,O,W,W,O,O,O,W,W,O,O,K,_,_,_],
+  [K,O,O,O,O,O,O,O,O,O,O,O,O,K,_,_], // body curled
+  [K,O,D,O,W,W,W,W,W,O,D,O,O,K,_,_],
+  [K,O,O,O,W,W,W,W,W,O,O,O,O,K,_,_],
+  [_,K,O,O,O,O,O,O,O,O,O,O,K,_,_,_],
+  [_,_,K,K,O,O,K,K,K,K,K,K,_,_,_,_], // tail wrapping around
+  [_,_,_,K,O,K,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,K,T,K,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,K,_,_,_,_,_,_,_,_,_,_,_],
+  [_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_],
+];
+
+// Happy — eyes curved ^^ style
+const HAPPY: R[][] = SIT.map((row, r) =>
+  r === 4
+    ? row.map((v, c) =>
+        c === 3 ? K : c === 4 ? O :
+        c === 9 ? O : c === 10 ? K : v)
+    : r === 5
+    ? row.map((v, c) =>
+        c === 3 ? O : c === 4 ? K :
+        c === 9 ? K : c === 10 ? O : v)
+    : row
 );
 
-const WALK1: Frame = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
-  [0,0,1,2,1,1,1,1,1,1,1,1,2,1,0,0],
-  [0,0,1,2,3,1,1,1,1,1,1,3,2,1,0,0],
-  [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,0,1,6,1,0,0,0,0,0,0,0,1,1,0,0],
-  [0,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0],
-  [0,1,6,0,0,0,0,0,0,0,0,0,6,1,0,0],
-  [0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-const WALK2: Frame = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
-  [0,0,1,2,1,1,1,1,1,1,1,1,2,1,0,0],
-  [0,0,1,2,3,1,1,1,1,1,1,3,2,1,0,0],
-  [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,0,0,1,6,0,0,0,0,0,0,1,6,0,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-  [0,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-const HAPPY: Frame = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [1,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1],
-  [0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0],
-  [0,0,1,2,1,1,1,1,1,1,1,1,2,1,0,0],
-  [0,0,1,2,3,1,1,1,1,1,1,3,2,1,0,0],
-  [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,1,3,3,3,3,3,3,3,3,3,3,3,3,1,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,0,1,6,0,0,0,0,0,0,0,0,6,1,0,0],
-  [0,0,1,1,0,0,0,0,0,0,0,0,1,1,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-const SLEEP: Frame = [
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
-  [0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0],
-  [0,0,1,2,1,1,1,1,1,1,1,1,2,1,0,0],
-  [0,0,1,2,2,1,1,1,1,1,1,2,2,1,0,0],
-  [0,0,1,1,1,1,4,1,1,4,1,1,1,1,0,0],
-  [0,1,1,3,3,3,3,3,3,3,3,3,3,1,1,0],
-  [0,1,3,1,1,1,1,1,1,1,1,1,1,3,1,0],
-  [0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-];
-
-function drawFrame(ctx: CanvasRenderingContext2D, frame: Frame, ox: number, oy: number, flipX = false) {
-  for (let r = 0; r < H; r++) {
-    for (let c = 0; c < W; c++) {
-      const v = frame[r][c];
-      if (!v || !P[v]) continue;
-      ctx.fillStyle = P[v];
-      const dc = flipX ? W - 1 - c : c;
-      ctx.fillRect(ox + dc * SCALE, oy + r * SCALE, SCALE, SCALE);
+function drawCat(
+  ctx: CanvasRenderingContext2D,
+  frame: R[][],
+  ox: number,
+  oy: number,
+  flipX: boolean,
+) {
+  const rows = frame.length;
+  const cols = frame[0].length;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const col = frame[r][c];
+      if (!col || col === 'transparent') continue;
+      const dc = flipX ? cols - 1 - c : c;
+      ctx.fillStyle = col;
+      ctx.fillRect(ox + dc * S, oy + r * S, S, S);
     }
   }
 }
 
-function drawTail(ctx: CanvasRenderingContext2D, ox: number, oy: number, swing: number, flipX: boolean) {
-  const segments = [
-    { c: flipX ? -1 : 16, r: 9 },
-    { c: flipX ? -2 : 17, r: 10 },
-    { c: flipX ? -3 : 17, r: 11 },
-    { c: flipX ? -3 : 16, r: 12 },
-    { c: flipX ? -2 : 15, r: 13 },
-    { c: flipX ? -1 : 14, r: 14 },
+function drawTail(
+  ctx: CanvasRenderingContext2D,
+  ox: number,
+  oy: number,
+  flipX: boolean,
+  swing: number,
+) {
+  // Tail exits from the back of the cat (row ~8–12), curls upward
+  const bx = flipX ? -1 : 12; // column index just outside sprite
+  const sign = flipX ? -1 : 1;
+
+  const segs: Array<{ dc: number; dr: number; color: string }> = [
+    { dc: sign * 1, dr: 10, color: K },
+    { dc: sign * 1, dr: 9,  color: O },
+    { dc: sign * 2, dr: 8,  color: O },
+    { dc: sign * 2, dr: 7 + swing, color: O },
+    { dc: sign * 3, dr: 6 + swing, color: D },
+    { dc: sign * 3, dr: 5 + swing, color: T },
+    { dc: sign * 2, dr: 4 + swing, color: T },
+    { dc: sign * 2, dr: 3 + swing, color: K },
   ];
-  segments.forEach(({ c, r }, i) => {
-    const s = Math.round(swing * (i / segments.length));
-    ctx.fillStyle = i >= segments.length - 1 ? P[5] : P[1];
-    ctx.fillRect(ox + c * SCALE, oy + (r + s) * SCALE, SCALE, SCALE);
+
+  segs.forEach(({ dc, dr, color }) => {
+    ctx.fillStyle = color;
+    ctx.fillRect(ox + (bx + dc) * S, oy + dr * S, S, S);
   });
 }
 
 function drawZs(ctx: CanvasRenderingContext2D, ox: number, oy: number, tick: number) {
-  const alpha1 = 0.4 + 0.4 * Math.sin(tick * 0.04);
-  const alpha2 = 0.4 + 0.4 * Math.sin(tick * 0.04 + 1.5);
-  ctx.font = 'bold 7px monospace';
-  ctx.fillStyle = `rgba(147,197,253,${alpha1})`;
-  ctx.fillText('z', ox + 13 * SCALE, oy + 2 * SCALE);
-  ctx.font = 'bold 9px monospace';
-  ctx.fillStyle = `rgba(147,197,253,${alpha2})`;
-  ctx.fillText('Z', ox + 14 * SCALE, oy - 2);
+  [
+    { size: 9,  xo: 14, yo: -4,  phase: 0 },
+    { size: 12, xo: 17, yo: -12, phase: 1.2 },
+    { size: 15, xo: 20, yo: -22, phase: 2.4 },
+  ].forEach(({ size, xo, yo, phase }) => {
+    const a = Math.max(0, 0.3 + 0.7 * Math.sin(tick * 0.035 + phase));
+    const yb = Math.sin(tick * 0.035 + phase) * 2;
+    ctx.font = `bold ${size}px sans-serif`;
+    ctx.fillStyle = `rgba(173,216,255,${a})`;
+    ctx.fillText('z', ox + xo * S / 2, oy + yo + yb);
+  });
 }
 
-type CatState = 'idle' | 'walking' | 'happy' | 'sleeping' | 'blinking';
+type State = 'idle' | 'walking' | 'happy' | 'sleeping' | 'blinking';
 
 export default function PixelCat() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasRef  = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const stateRef = useRef<CatState>('idle');
-  const posXRef = useRef(20);
-  const dirRef = useRef<1 | -1>(1);
-  const tickRef = useRef(0);
-  const walkTickRef = useRef(0);
-  const idleTimerRef = useRef(0);
-  const blinkTimerRef = useRef(150);
-  const blinkPhaseRef = useRef(0);
-  const happyTimerRef = useRef(0);
-  const sleepTimerRef = useRef(0);
-  const targetXRef = useRef<number | null>(null);
-  const rafRef = useRef<number>(0);
+
+  const posRef   = useRef({ x: 20, y: 60 });
+  const tgtRef   = useRef<{ x: number; y: number } | null>(null);
+  const dirRef   = useRef<1 | -1>(1);
+  const stateRef = useRef<State>('idle');
+
+  const tickRef       = useRef(0);
+  const walkTRef      = useRef(0);
+  const idleTRef      = useRef(0);
+  const blinkTRef     = useRef(120);
+  const blinkPhRef    = useRef(0);
+  const happyTRef     = useRef(0);
+  const sleepTRef     = useRef(0);
+  const rafRef        = useRef(0);
 
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (stateRef.current === 'sleeping') {
-      stateRef.current = 'idle';
-      sleepTimerRef.current = 0;
-      idleTimerRef.current = 0;
-      return;
-    }
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
+
+    if (stateRef.current === 'sleeping') {
+      stateRef.current = 'idle';
+      sleepTRef.current = 0;
+      idleTRef.current  = 0;
+      return;
+    }
+
+    const cw = rect.width;
+    const ch = rect.height;
+    const catW = 16 * S;
+    const catH = 16 * S;
     const cx = e.clientX - rect.left;
-    const max = rect.width - W * SCALE - 8;
-    targetXRef.current = Math.max(8, Math.min(cx - (W * SCALE) / 2, max));
+    const cy = e.clientY - rect.top;
+
+    tgtRef.current = {
+      x: Math.max(4, Math.min(cx - catW / 2, cw - catW - 12)),
+      y: Math.max(4, Math.min(cy - catH / 2, ch - catH - 4)),
+    };
     stateRef.current = 'walking';
-    happyTimerRef.current = 0;
+    happyTRef.current = 0;
   }, []);
 
   useEffect(() => {
@@ -205,106 +242,124 @@ export default function PixelCat() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const SPEED = 2;
+    const catW  = 16 * S;
+    const catH  = 16 * S;
+
     const loop = () => {
       const cw = container.clientWidth;
       const ch = container.clientHeight;
-      if (canvas.width !== cw) canvas.width = cw;
-      if (canvas.height !== ch) canvas.height = ch;
+
+      if (canvas.width !== cw || canvas.height !== ch) {
+        canvas.width  = cw;
+        canvas.height = ch;
+        posRef.current.x = Math.min(posRef.current.x, cw - catW - 12);
+        posRef.current.y = Math.min(posRef.current.y, ch - catH - 4);
+      }
+
       ctx.clearRect(0, 0, cw, ch);
       ctx.imageSmoothingEnabled = false;
 
       const tick = ++tickRef.current;
-      const catPxW = W * SCALE;
-      const catPxH = H * SCALE;
-      const groundY = ch - catPxH - 12;
-      const maxX = cw - catPxW - 8;
+      const maxX = cw - catW - 12; // extra right margin for tail
+      const maxY = ch - catH - 4;
+      const { x, y } = posRef.current;
+      const st = stateRef.current;
 
-      // ── State machine ──────────────────────────────────────────────────────
-      const state = stateRef.current;
-
-      if (state === 'happy') {
-        if (++happyTimerRef.current > 70) { stateRef.current = 'idle'; happyTimerRef.current = 0; }
-
-      } else if (state === 'walking') {
-        const tx = targetXRef.current;
-        if (tx !== null) {
-          const dx = tx - posXRef.current;
-          if (Math.abs(dx) < 2) {
-            posXRef.current = tx;
-            targetXRef.current = null;
+      // ── State machine ────────────────────────────────────────────────────
+      if (st === 'walking') {
+        const tgt = tgtRef.current;
+        if (tgt) {
+          const dx = tgt.x - x;
+          const dy = tgt.y - y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 3) {
+            posRef.current = { x: tgt.x, y: tgt.y };
+            tgtRef.current = null;
             stateRef.current = 'happy';
-            happyTimerRef.current = 0;
+            happyTRef.current = 0;
           } else {
-            dirRef.current = dx > 0 ? 1 : -1;
-            posXRef.current = Math.max(8, Math.min(posXRef.current + dirRef.current * 1.5, maxX));
-            walkTickRef.current++;
+            const nx = x + (dx / dist) * SPEED;
+            const ny = y + (dy / dist) * SPEED;
+            posRef.current = {
+              x: Math.max(4, Math.min(nx, maxX)),
+              y: Math.max(4, Math.min(ny, maxY)),
+            };
+            if (Math.abs(dx) > 0.5) dirRef.current = dx > 0 ? 1 : -1;
+            walkTRef.current++;
           }
         } else {
           stateRef.current = 'idle';
         }
 
-      } else if (state === 'idle') {
-        idleTimerRef.current++;
-        blinkTimerRef.current++;
+      } else if (st === 'happy') {
+        if (++happyTRef.current > 55) {
+          stateRef.current = 'idle';
+          happyTRef.current = 0;
+          idleTRef.current  = 0;
+        }
 
-        // Blink every ~3–5 s
-        if (blinkTimerRef.current > 180 + Math.floor(Math.random() * 120)) {
+      } else if (st === 'idle') {
+        idleTRef.current++;
+        blinkTRef.current++;
+
+        if (blinkTRef.current > 180 + Math.floor(Math.random() * 120)) {
           stateRef.current = 'blinking';
-          blinkPhaseRef.current = 0;
-          blinkTimerRef.current = 0;
+          blinkPhRef.current = 0;
+          blinkTRef.current  = 0;
         }
 
-        // Fall asleep after ~9 s idle
-        if (idleTimerRef.current > 540) {
+        if (idleTRef.current > 500) {
           stateRef.current = 'sleeping';
-          sleepTimerRef.current = 0;
-          idleTimerRef.current = 0;
+          sleepTRef.current = 0;
+          idleTRef.current  = 0;
         }
 
-        // Wander occasionally
-        if (idleTimerRef.current > 0 && idleTimerRef.current % 300 === 0 && Math.random() > 0.4) {
-          targetXRef.current = 16 + Math.floor(Math.random() * (maxX - 16));
+        // wander every ~5 s
+        if (idleTRef.current > 0 && idleTRef.current % 300 === 0 && Math.random() > 0.3) {
+          tgtRef.current = {
+            x: 8 + Math.random() * (maxX - 8),
+            y: 8 + Math.random() * (maxY - 8),
+          };
           stateRef.current = 'walking';
         }
 
-      } else if (state === 'blinking') {
-        if (++blinkPhaseRef.current > 14) { stateRef.current = 'idle'; idleTimerRef.current = 0; }
-
-      } else if (state === 'sleeping') {
-        if (++sleepTimerRef.current > 600) {
+      } else if (st === 'blinking') {
+        if (++blinkPhRef.current > 10) {
           stateRef.current = 'idle';
-          sleepTimerRef.current = 0;
-          idleTimerRef.current = 0;
+          idleTRef.current  = 0;
+        }
+
+      } else if (st === 'sleeping') {
+        if (++sleepTRef.current > 580) {
+          stateRef.current = 'idle';
+          sleepTRef.current = 0;
+          idleTRef.current  = 0;
         }
       }
 
-      // ── Draw ──────────────────────────────────────────────────────────────
-      const ox = Math.round(posXRef.current);
-      const oy = Math.round(groundY);
+      // ── Render ───────────────────────────────────────────────────────────
+      const ox   = Math.round(posRef.current.x);
+      const oy   = Math.round(posRef.current.y);
       const flip = dirRef.current === -1;
-      const tailSwing = Math.round(Math.sin(tick * 0.07) * 2.5);
-      const curState = stateRef.current;
+      const swing = Math.round(Math.sin(tick * 0.09) * 2);
+      const cur  = stateRef.current;
 
-      if (curState === 'sleeping') {
-        const sleepOy = oy + 8; // curled lower
-        drawFrame(ctx, SLEEP, ox, sleepOy, flip);
-        drawZs(ctx, ox, sleepOy, tick);
+      if (cur === 'sleeping') {
+        drawCat(ctx, SLEEP, ox, oy, flip);
+        drawZs(ctx, ox, oy, tick);
       } else {
-        drawTail(ctx, ox, oy, tailSwing, flip);
-        if (curState === 'happy') {
-          // Bounce slightly
-          const bounce = Math.abs(Math.sin(tick * 0.3)) * 4;
-          drawFrame(ctx, HAPPY, ox, oy - Math.round(bounce), flip);
-        } else if (curState === 'walking') {
-          const wf = Math.floor(walkTickRef.current / 7) % 2 === 0 ? WALK1 : WALK2;
-          drawFrame(ctx, wf, ox, oy, flip);
-        } else if (curState === 'blinking') {
-          const bp = blinkPhaseRef.current;
-          const bf = bp < 3 ? SIT : bp < 6 ? BLINK1 : bp < 9 ? BLINK2 : bp < 12 ? BLINK1 : SIT;
-          drawFrame(ctx, bf, ox, oy, flip);
+        drawTail(ctx, ox, oy, flip, swing);
+        if (cur === 'happy') {
+          const bounce = Math.round(Math.abs(Math.sin(tick * 0.22)) * 5);
+          drawCat(ctx, HAPPY, ox, oy - bounce, flip);
+        } else if (cur === 'walking') {
+          const frame = Math.floor(walkTRef.current / 7) % 2 === 0 ? W1 : W2;
+          drawCat(ctx, frame, ox, oy, flip);
+        } else if (cur === 'blinking') {
+          drawCat(ctx, blinkPhRef.current < 5 ? BLINK : SIT, ox, oy, flip);
         } else {
-          // idle — tiny tail wag already drawn, draw body
-          drawFrame(ctx, SIT, ox, oy, flip);
+          drawCat(ctx, SIT, ox, oy, flip);
         }
       }
 
@@ -316,7 +371,11 @@ export default function PixelCat() {
   }, []);
 
   return (
-    <div ref={containerRef} className="relative w-full flex-1" style={{ minHeight: 160 }}>
+    <div
+      ref={containerRef}
+      className="relative w-full flex-1"
+      style={{ minHeight: 200 }}
+    >
       <canvas
         ref={canvasRef}
         onClick={handleClick}
@@ -327,13 +386,13 @@ export default function PixelCat() {
           cursor: 'pointer',
           imageRendering: 'pixelated',
         }}
-        title="Click me!"
+        title="Click anywhere to call the cat!"
       />
       <span
-        className="absolute bottom-2 left-0 right-0 text-center text-xs select-none pointer-events-none"
-        style={{ color: 'hsl(var(--kpdf-muted-fg))', opacity: 0.45, fontSize: '10px' }}
+        className="absolute bottom-2 left-0 right-0 text-center select-none pointer-events-none"
+        style={{ color: 'hsl(var(--kpdf-muted-fg))', opacity: 0.35, fontSize: '9px', letterSpacing: '0.05em' }}
       >
-        click to interact ✦
+        click to interact
       </span>
     </div>
   );
