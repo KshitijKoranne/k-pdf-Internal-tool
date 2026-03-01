@@ -50,14 +50,12 @@ export default function ZombieWalker() {
       Math.random() * (WANDER_INTERVAL_MAX - WANDER_INTERVAL_MIN);
   }, []);
 
-  // Click: send zombie to click position
-  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
+  // Shared movement logic
+  const sendTo = useCallback((clientX: number, clientY: number, rect: DOMRect) => {
     const cw = rect.width;
     const ch = rect.height;
-    const cx = e.clientX - rect.left;
-    const cy = e.clientY - rect.top;
+    const cx = clientX - rect.left;
+    const cy = clientY - rect.top;
     targetRef.current = {
       x: Math.max(4, Math.min(cx - DISPLAY_W / 2, cw - DISPLAY_W - 4)),
       y: Math.max(4, Math.min(cy - DISPLAY_H / 2, ch - DISPLAY_H - 4)),
@@ -65,6 +63,23 @@ export default function ZombieWalker() {
     isMovingRef.current = true;
     wanderTimerRef.current = 0;
   }, []);
+
+  // Click: send zombie to click position
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    sendTo(e.clientX, e.clientY, rect);
+  }, [sendTo]);
+
+  // Touch: same as click
+  const handleTouch = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0] || e.changedTouches[0];
+    if (!touch) return;
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    sendTo(touch.clientX, touch.clientY, rect);
+  }, [sendTo]);
 
   useEffect(() => {
     // Load sprite sheet once
@@ -184,6 +199,7 @@ export default function ZombieWalker() {
       <canvas
         ref={canvasRef}
         onClick={handleClick}
+        onTouchStart={handleTouch}
         style={{
           width: '100%',
           height: '100%',

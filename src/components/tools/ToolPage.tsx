@@ -61,7 +61,7 @@ export function ToolPage({ tool, content, locale, children, localizedRelatedTool
         <Header locale={locale as Locale} />
 
         <main id="main-content" className="flex-1" tabIndex={-1}>
-          <div className="max-w-7xl mx-auto px-4 pt-8 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-8 pb-8">
             {/* Breadcrumb Navigation */}
             <nav aria-label="Breadcrumb" className="mb-4 flex items-center text-sm text-[hsl(var(--color-muted-foreground))] animate-in fade-in slide-in-from-top-4 duration-500 delay-100">
               <Link
@@ -143,7 +143,7 @@ function ToolHeader({ tool, content }: ToolHeaderProps) {
         <IconComponent className="w-8 h-8 text-[hsl(var(--color-primary))]" />
       </div>
       <h1
-        className="text-3xl font-bold text-[hsl(var(--color-foreground))] mb-4"
+        className="text-2xl sm:text-3xl font-bold text-[hsl(var(--color-foreground))] mb-4"
         data-testid="tool-page-title"
         itemProp="name"
       >
@@ -176,7 +176,7 @@ function DescriptionSection({ description }: DescriptionSectionProps) {
     >
       <h2
         id="description-heading"
-        className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-6"
+        className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4 sm:mb-6"
       >
         {t('tools.about')}
       </h2>
@@ -211,12 +211,12 @@ function HowToUseSection({ steps }: HowToUseSectionProps) {
     >
       <h2
         id="how-to-use-heading"
-        className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-6"
+        className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4 sm:mb-6"
         itemProp="name"
       >
         {t('tools.howToUse')}
       </h2>
-      <ol className="grid gap-6 md:grid-cols-3" data-testid="how-to-use-steps">
+      <ol className="grid gap-4 grid-cols-1 md:grid-cols-3" data-testid="how-to-use-steps">
         {steps.map((step) => (
           <li
             key={step.step}
@@ -268,12 +268,12 @@ function UseCasesSection({ useCases }: UseCasesSectionProps) {
     >
       <h2
         id="use-cases-heading"
-        className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-6"
+        className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4 sm:mb-6"
       >
         {t('tools.useCases')}
       </h2>
       <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         data-testid="use-cases-grid"
       >
         {useCases.map((useCase, index) => (
@@ -330,7 +330,7 @@ function FAQSection({ faq }: FAQSectionProps) {
     >
       <h2
         id="faq-heading"
-        className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-6"
+        className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4 sm:mb-6"
       >
         {t('tools.faq')}
       </h2>
@@ -381,12 +381,12 @@ function RelatedToolsSection({ tools, locale, localizedRelatedTools }: RelatedTo
     >
       <h2
         id="related-tools-heading"
-        className="text-2xl font-bold text-[hsl(var(--color-foreground))] mb-6"
+        className="text-xl sm:text-2xl font-bold text-[hsl(var(--color-foreground))] mb-4 sm:mb-6"
       >
         {t('tools.relatedTools')}
       </h2>
       <div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         data-testid="related-tools-grid"
       >
         {tools.map(tool => {

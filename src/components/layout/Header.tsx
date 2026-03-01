@@ -120,7 +120,7 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = true, onMen
 
       {/* Search — it-tools uses command palette style */}
       {showSearch && (
-        <div className="flex-1 max-w-md relative" ref={searchContainerRef}>
+        <div className="flex-1 max-w-md relative hidden sm:block" ref={searchContainerRef}>
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -207,7 +207,7 @@ export const Header: React.FC<HeaderProps> = ({ locale, showSearch = true, onMen
       )}
 
       {/* Right side actions */}
-      <div className="flex items-center gap-1 ml-auto">
+      <div className="flex items-center gap-0.5 ml-auto flex-shrink-0">
         <RecentFilesDropdown
           locale={locale}
           translations={{
