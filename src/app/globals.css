@@ -285,9 +285,10 @@ body {
   position: sticky;
   top: 0;
   flex-shrink: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   transition: width 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .kpdf-sidebar.collapsed {
