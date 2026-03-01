@@ -11,7 +11,7 @@ import { getAllTools } from '@/config/tools';
 import { type Locale } from '@/lib/i18n/config';
 
 // Load pixel cat client-side only (canvas)
-const PixelCat = dynamic(() => import('@/components/sidebar/PixelCat'), { ssr: false });
+const ZombieWalker = dynamic(() => import('@/components/sidebar/ZombieWalker'), { ssr: false });
 
 interface HomePageClientProps {
   locale: Locale;
@@ -40,7 +40,7 @@ export default function HomePageClient({ locale, localizedToolContent }: HomePag
         </Link>
 
         {/* Pixel cat — fills remaining sidebar space */}
-        <PixelCat />
+        <ZombieWalker />
       </aside>
 
       {/* ── MAIN CONTENT ── */}
