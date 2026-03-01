@@ -3,90 +3,126 @@
 import { useEffect, useRef, useCallback } from 'react';
 
 // ─── Sprite sheet config ──────────────────────────────────────────────────────
-const SHEET_W     = 1280;
-const SHEET_H     = 128;
-const FRAME_W     = 128;   // 10 frames × 128px
-const FRAME_H     = 128;
-const N_FRAMES    = 10;
-const DISPLAY_W   = 80;    // rendered size
-const DISPLAY_H   = 80;
-const WALK_FPS    = 12;    // animation speed in frames per second
-const MOVE_SPEED  = 0.8;   // px per tick
+const SPRITES = {
+  walk:   { src: '/cat-walk.png',   frames: 4, fw: 72, fh: 48 },
+  idle:   { src: '/cat-idle.png',   frames: 4, fw: 48, fh: 48 },
+  attack: { src: '/cat-attack.png', frames: 4, fw: 48, fh: 48 },
+  death:  { src: '/cat-death.png',  frames: 4, fw: 48, fh: 48 },
+} as const;
 
-// How long (ms) between direction/target changes when wandering
-const WANDER_INTERVAL_MIN = 2000;
-const WANDER_INTERVAL_MAX = 5000;
+type AnimState = 'idle' | 'walk' | 'attack' | 'death' | 'revive';
 
-export default function ZombieWalker() {
+// Display size — upscale 3× (cat is tiny at native ~27×22px)
+const SCALE        = 3.5;
+const DISPLAY_W    = Math.round(72 * SCALE);   // walk frame is widest
+const DISPLAY_H    = Math.round(48 * SCALE);
+const WALK_FPS     = 10;
+const IDLE_FPS     = 8;
+const ATTACK_FPS   = 10;
+const DEATH_FPS    = 7;
+const MOVE_SPEED   = 1.2;
+
+export default function SidebarCat() {
   const canvasRef    = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imgRef       = useRef<HTMLImageElement | null>(null);
-  const imgLoadedRef = useRef(false);
 
-  // Position & movement
-  const posRef    = useRef({ x: 40, y: 80 });
-  const targetRef = useRef<{ x: number; y: number } | null>(null);
-  const dirRef    = useRef<1 | -1>(1); // 1 = right, -1 = left (for sprite flip)
+  // Loaded images
+  const imgs = useRef<Partial<Record<keyof typeof SPRITES, HTMLImageElement>>>({});
+  const loadedCount = useRef(0);
 
-  // Animation
-  const tickRef        = useRef(0);
-  const frameIdxRef    = useRef(0);
-  const lastFrameTime  = useRef(0);
+  // State
+  const stateRef     = useRef<AnimState>('idle');
+  const prevState    = useRef<AnimState>('idle');
+  const posRef       = useRef({ x: 20, y: 60 });
+  const targetRef    = useRef<{ x: number; y: number } | null>(null);
+  const dirRef       = useRef<1 | -1>(1);
+
+  // Animation timing
+  const frameIdxRef  = useRef(0);
+  const lastFrameMs  = useRef(0);
+
+  // Timers
+  const idleTimerRef   = useRef(0);
   const wanderTimerRef = useRef(0);
-  const nextWanderRef  = useRef(2000);
-  const rafRef         = useRef(0);
-  const isMovingRef    = useRef(false);
+  const nextWanderMs   = useRef(3000);
+  const attackDone     = useRef(false);
+  const deathDone      = useRef(false);
 
-  // Pick a new random wander target within sidebar bounds
-  const pickTarget = useCallback((cw: number, ch: number) => {
-    const maxX = cw - DISPLAY_W - 4;
-    const maxY = ch - DISPLAY_H - 4;
-    targetRef.current = {
-      x: 8 + Math.random() * Math.max(0, maxX - 8),
-      y: 8 + Math.random() * Math.max(0, maxY - 8),
-    };
-    isMovingRef.current = true;
-    nextWanderRef.current = WANDER_INTERVAL_MIN +
-      Math.random() * (WANDER_INTERVAL_MAX - WANDER_INTERVAL_MIN);
-  }, []);
+  const rafRef = useRef(0);
 
-  // Shared movement logic
-  const sendTo = useCallback((clientX: number, clientY: number, rect: DOMRect) => {
-    const cw = rect.width;
-    const ch = rect.height;
-    const cx = clientX - rect.left;
-    const cy = clientY - rect.top;
+  // ── Pick random wander target ─────────────────────────────────────────────
+  const pickWander = useCallback((cw: number, ch: number) => {
+    const maxX = cw - DISPLAY_W - 8;
+    const maxY = ch - DISPLAY_H - 8;
     targetRef.current = {
-      x: Math.max(4, Math.min(cx - DISPLAY_W / 2, cw - DISPLAY_W - 4)),
-      y: Math.max(4, Math.min(cy - DISPLAY_H / 2, ch - DISPLAY_H - 4)),
+      x: 8 + Math.random() * Math.max(1, maxX - 8),
+      y: 8 + Math.random() * Math.max(1, maxY - 8),
     };
-    isMovingRef.current = true;
+    stateRef.current = 'walk';
+    frameIdxRef.current = 0;
+    nextWanderMs.current = 2500 + Math.random() * 3500;
     wanderTimerRef.current = 0;
   }, []);
 
-  // Click: send zombie to click position
-  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+  // ── Input: click or touch ─────────────────────────────────────────────────
+  const handleInput = useCallback((clientX: number, clientY: number) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
-    sendTo(e.clientX, e.clientY, rect);
-  }, [sendTo]);
+    const st = stateRef.current;
 
-  // Touch: same as click
+    // During death — click revives
+    if (st === 'death' || st === 'revive') {
+      stateRef.current = 'idle';
+      frameIdxRef.current = 0;
+      deathDone.current = false;
+      return;
+    }
+
+    // Click near the cat → attack
+    const cx = clientX - rect.left;
+    const cy = clientY - rect.top;
+    const ox = posRef.current.x;
+    const oy = posRef.current.y;
+    const dist = Math.sqrt((cx - ox - DISPLAY_W / 2) ** 2 + (cy - oy - DISPLAY_H / 2) ** 2);
+
+    if (dist < DISPLAY_W * 0.8) {
+      // Clicked ON the cat → attack
+      stateRef.current = 'attack';
+      frameIdxRef.current = 0;
+      attackDone.current = false;
+    } else {
+      // Clicked elsewhere → walk there
+      const cw = rect.width;
+      const ch = rect.height;
+      targetRef.current = {
+        x: Math.max(8, Math.min(cx - DISPLAY_W / 2, cw - DISPLAY_W - 8)),
+        y: Math.max(8, Math.min(cy - DISPLAY_H / 2, ch - DISPLAY_H - 8)),
+      };
+      stateRef.current = 'walk';
+      frameIdxRef.current = 0;
+      wanderTimerRef.current = 0;
+    }
+  }, []);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    handleInput(e.clientX, e.clientY);
+  }, [handleInput]);
+
   const handleTouch = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const touch = e.touches[0] || e.changedTouches[0];
-    if (!touch) return;
-    const rect = canvasRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    sendTo(touch.clientX, touch.clientY, rect);
-  }, [sendTo]);
+    const t = e.touches[0] || e.changedTouches[0];
+    if (t) handleInput(t.clientX, t.clientY);
+  }, [handleInput]);
 
+  // ── Main loop ─────────────────────────────────────────────────────────────
   useEffect(() => {
-    // Load sprite sheet once
-    const img = new Image();
-    img.src = '/zombie_walk.png';
-    img.onload = () => { imgLoadedRef.current = true; };
-    imgRef.current = img;
+    // Preload all sprites
+    (Object.keys(SPRITES) as Array<keyof typeof SPRITES>).forEach(key => {
+      const img = new Image();
+      img.src = SPRITES[key].src;
+      img.onload = () => { loadedCount.current++; };
+      imgs.current[key] = img;
+    });
 
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -94,92 +130,146 @@ export default function ZombieWalker() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let lastTimestamp = 0;
+    let lastTs = 0;
 
-    const loop = (timestamp: number) => {
-      const dt = timestamp - lastTimestamp;
-      lastTimestamp = timestamp;
+    const loop = (ts: number) => {
+      const dt = Math.min(ts - lastTs, 50); // cap dt to avoid huge jumps
+      lastTs = ts;
 
       const cw = container.clientWidth;
       const ch = container.clientHeight;
-
       if (canvas.width !== cw || canvas.height !== ch) {
         canvas.width  = cw;
         canvas.height = ch;
+        // Keep cat in bounds after resize
+        posRef.current.x = Math.min(posRef.current.x, cw - DISPLAY_W - 8);
+        posRef.current.y = Math.min(posRef.current.y, ch - DISPLAY_H - 8);
       }
 
       ctx.clearRect(0, 0, cw, ch);
+      if (!ctx) { rafRef.current = requestAnimationFrame(loop); return; }
+      ctx.imageSmoothingEnabled = false;
 
-      const maxX = cw - DISPLAY_W - 4;
-      const maxY = ch - DISPLAY_H - 4;
+      const st = stateRef.current;
+      const maxX = cw - DISPLAY_W - 8;
+      const maxY = ch - DISPLAY_H - 8;
 
-      // ── Wander AI ────────────────────────────────────────────────────────
-      wanderTimerRef.current += dt;
-      if (!isMovingRef.current && wanderTimerRef.current > nextWanderRef.current) {
-        wanderTimerRef.current = 0;
-        pickTarget(cw, ch);
-      }
-
-      // ── Movement ─────────────────────────────────────────────────────────
-      const tgt = targetRef.current;
-      if (tgt && isMovingRef.current) {
-        const dx = tgt.x - posRef.current.x;
-        const dy = tgt.y - posRef.current.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < 2) {
-          posRef.current = { x: tgt.x, y: tgt.y };
-          targetRef.current = null;
-          isMovingRef.current = false;
-          wanderTimerRef.current = 0;
+      // ── State machine ──────────────────────────────────────────────────
+      if (st === 'walk') {
+        const tgt = targetRef.current;
+        if (tgt) {
+          const dx = tgt.x - posRef.current.x;
+          const dy = tgt.y - posRef.current.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 2.5) {
+            posRef.current = { ...tgt };
+            targetRef.current = null;
+            stateRef.current = 'idle';
+            frameIdxRef.current = 0;
+          } else {
+            const spd = MOVE_SPEED * (dt / 16);
+            posRef.current = {
+              x: Math.max(8, Math.min(posRef.current.x + (dx / dist) * spd, maxX)),
+              y: Math.max(8, Math.min(posRef.current.y + (dy / dist) * spd, maxY)),
+            };
+            if (Math.abs(dx) > 0.5) dirRef.current = dx > 0 ? 1 : -1;
+          }
         } else {
-          const speed = MOVE_SPEED * (dt / 16); // normalize to ~60fps
-          posRef.current = {
-            x: Math.max(4, Math.min(posRef.current.x + (dx / dist) * speed, maxX)),
-            y: Math.max(4, Math.min(posRef.current.y + (dy / dist) * speed, maxY)),
-          };
-          // Face direction of horizontal travel
-          if (Math.abs(dx) > 0.3) dirRef.current = dx > 0 ? 1 : -1;
+          stateRef.current = 'idle';
+          frameIdxRef.current = 0;
+        }
+
+      } else if (st === 'idle') {
+        idleTimerRef.current += dt;
+        wanderTimerRef.current += dt;
+
+        // Auto-wander
+        if (wanderTimerRef.current > nextWanderMs.current) {
+          pickWander(cw, ch);
+        }
+
+        // Die of boredom after ~15s idle with no wander
+        if (idleTimerRef.current > 15000) {
+          stateRef.current = 'death';
+          frameIdxRef.current = 0;
+          deathDone.current = false;
+          idleTimerRef.current = 0;
+        }
+
+      } else if (st === 'attack') {
+        // Attack animation plays once then return to idle
+        if (attackDone.current) {
+          stateRef.current = 'idle';
+          frameIdxRef.current = 0;
+          attackDone.current = false;
+        }
+
+      } else if (st === 'death') {
+        // Hold last frame, wait for click to revive
+        // (handled in handleInput)
+        if (deathDone.current) {
+          // Auto-revive after 4s
+          // handled via timer below
         }
       }
 
-      // ── Frame animation ──────────────────────────────────────────────────
-      if (isMovingRef.current) {
-        // Advance sprite frame at WALK_FPS
-        if (timestamp - lastFrameTime.current > 1000 / WALK_FPS) {
-          frameIdxRef.current = (frameIdxRef.current + 1) % N_FRAMES;
-          lastFrameTime.current = timestamp;
+      // ── Sprite frame advance ─────────────────────────────────────────────
+      const fps = st === 'walk' ? WALK_FPS : st === 'attack' ? ATTACK_FPS : st === 'death' ? DEATH_FPS : IDLE_FPS;
+      const interval = 1000 / fps;
+      const spriteKey = (st === 'revive' ? 'idle' : st) as keyof typeof SPRITES;
+      const totalFrames = SPRITES[spriteKey]?.frames ?? 4;
+
+      if (ts - lastFrameMs.current > interval) {
+        lastFrameMs.current = ts;
+        if (st === 'death') {
+          // Only advance until last frame, then hold
+          if (frameIdxRef.current < totalFrames - 1) {
+            frameIdxRef.current++;
+          } else {
+            deathDone.current = true;
+          }
+        } else if (st === 'attack') {
+          if (frameIdxRef.current < totalFrames - 1) {
+            frameIdxRef.current++;
+          } else {
+            attackDone.current = true;
+          }
+        } else {
+          frameIdxRef.current = (frameIdxRef.current + 1) % totalFrames;
         }
+      }
+
+      // ── Draw ──────────────────────────────────────────────────────────────
+      const spriteImg = imgs.current[spriteKey];
+      if (!spriteImg?.complete || !spriteImg.naturalWidth) {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
+
+      const { fw, fh } = SPRITES[spriteKey];
+      const srcX = frameIdxRef.current * fw;
+      const ox   = Math.round(posRef.current.x);
+      const oy   = Math.round(posRef.current.y);
+      const flip = dirRef.current === -1;
+
+      // Draw with optional horizontal flip
+      ctx.save();
+      if (flip) {
+        ctx.translate(ox + DISPLAY_W, oy);
+        ctx.scale(-1, 1);
+        ctx.drawImage(spriteImg, srcX, 0, fw, fh, 0, 0, DISPLAY_W, DISPLAY_H);
       } else {
-        // Idle — hold frame 0 (or slowly sway between 0-1)
-        frameIdxRef.current = 0;
+        ctx.drawImage(spriteImg, srcX, 0, fw, fh, ox, oy, DISPLAY_W, DISPLAY_H);
       }
+      ctx.restore();
 
-      // ── Draw ─────────────────────────────────────────────────────────────
-      if (imgLoadedRef.current && imgRef.current) {
-        const ox = Math.round(posRef.current.x);
-        const oy = Math.round(posRef.current.y);
-        const srcX = frameIdxRef.current * FRAME_W;
-        const flip  = dirRef.current === -1;
-
-        ctx.save();
-        if (flip) {
-          // Mirror horizontally around the sprite center
-          ctx.translate(ox + DISPLAY_W, oy);
-          ctx.scale(-1, 1);
-          ctx.drawImage(
-            imgRef.current!,
-            srcX, 0, FRAME_W, FRAME_H,
-            0, 0, DISPLAY_W, DISPLAY_H,
-          );
-        } else {
-          ctx.drawImage(
-            imgRef.current!,
-            srcX, 0, FRAME_W, FRAME_H,
-            ox, oy, DISPLAY_W, DISPLAY_H,
-          );
-        }
-        ctx.restore();
+      // ── Death hint text ──────────────────────────────────────────────────
+      if (st === 'death' && deathDone.current) {
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        ctx.textAlign = 'center';
+        ctx.fillText('tap to revive', ox + DISPLAY_W / 2, oy - 6);
+        ctx.textAlign = 'left';
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -187,14 +277,13 @@ export default function ZombieWalker() {
 
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [pickTarget]);
+  }, [pickWander]);
 
   return (
     <div
       ref={containerRef}
       className="relative w-full flex-1"
       style={{ minHeight: 200 }}
-      title="Click to direct the zombie"
     >
       <canvas
         ref={canvasRef}
@@ -205,7 +294,9 @@ export default function ZombieWalker() {
           height: '100%',
           display: 'block',
           cursor: 'pointer',
+          imageRendering: 'pixelated',
         }}
+        title="Click the cat to interact!"
       />
       <span
         className="absolute bottom-2 left-0 right-0 text-center select-none pointer-events-none"
@@ -216,7 +307,7 @@ export default function ZombieWalker() {
           letterSpacing: '0.05em',
         }}
       >
-        click to direct
+        click the cat ✦ click elsewhere to move
       </span>
     </div>
   );
